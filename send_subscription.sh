@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # activate venv
-source /var/phsyaci_subscriber/.venv/bin/activate
+source /var/physaci_subscriber/.venv/bin/activate
 
 # call subscription console script
 physaci_send_subscription
