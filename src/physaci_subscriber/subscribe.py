@@ -22,7 +22,10 @@
 #
 
 import hmac
+import logging
+import logging.config
 import json
+import pkg_resources
 import pathlib
 import secrets
 
@@ -35,12 +38,18 @@ import requests
 
 from physaci_subscriber.config import PhysaCIConfig
 
+log_conf_file = pkg_resources.resource_filename(__name__, 'logger.conf')
+logging.config.fileConfig(log_conf_file)
+debug_logger = logging.getLogger()
+logger = logging.getLogger('physaci_subscriber')
+
 class PhysaCISubscribe():
     """ Class to handle generating and sending subscription notices
         to physaCI.
     """
     def __init__(self):
         self.configuration = PhysaCIConfig()
+        debug_logger.debug('PhysaCISubscribe config: {}'.format(list(self.configuration.config.items())))
 
     def generate_node_key(self):
         """ Generate a new URL-safe key to be used with HTTP signatures
@@ -75,8 +84,8 @@ class PhysaCISubscribe():
 
         sig_string = "{}\n{}".format(header['Host'], header['Date'])
         sig_hashed = hmac.new(
-            self.configuration.node_sig_key,
-            msg=sig_string,
+            self.configuration.node_sig_key.encode(),
+            msg=sig_string.encode(),
             digestmod=sha256
         )
         signature = [
@@ -90,9 +99,12 @@ class PhysaCISubscribe():
 
         url = 'http://127.0.0.1:{}/status'.format(self.configuration.listen_port)
 
-        response = requests.get(url, headers=header)
-        if response.ok:
-            busy_status = response.json()
+        try:
+            response = requests.get(url, headers=header)
+            if response.ok:
+                busy_status = response.json()
+        except requests.exceptions.ConnectionError:
+            pass
 
         return busy_status
 
@@ -101,31 +113,32 @@ class PhysaCISubscribe():
             a new node signature key for use with an HTTP Signature header
             inside pushed notifications.
         """
-        print('Initiating physaCI registrar subscription...')
+        logger.info('Initiating physaCI registrar subscription...')
         sub_message = {
             'node_name': gethostname(),
             'listen_port': self.configuration.listen_port,
             'busy': self.node_busy_status().get('busy', False)
         }
 
-        print('Generating new node signature key...')
+        logger.info('Generating new node signature key...')
         self.generate_node_key()
         sub_message['node_sig_key'] = self.configuration.node_sig_key
 
         url = self.configuration.physaci_registrar_url
         header = {'x-functions-key': self.configuration.physaci_api_key}
 
-        print('Sending subscription request...')
+        logger.info('Sending subscription request...')
         response = requests.post(url, headers=header, json=sub_message)
         if response.ok:
             self.configuration.write_config()
-            print("Successfully subscribed.")
+            logger.info("Successfully subscribed.")
         else:
-            print("Subscription request failed:")
-            print(
-                "Response status code: {}\tResponse Message: {}".format(response.status_code,
-                                                                        response.text)
-            )
+            log_message = [
+                'Subscription request failed',
+                'Response status code: {}'.format(response.status_code),
+                'Response Message: {}'.format(response.text),
+            ]
+            logger.error(' | '.join(log_message))
 
 
 def subscribe_to_registrar():

@@ -21,10 +21,17 @@
 # THE SOFTWARE.
 #
 
+import logging
+import logging.config
 import pathlib
+import pkg_resources
 import re
 
 from configparser import ConfigParser
+
+log_conf_file = pkg_resources.resource_filename(__name__, 'logger.conf')
+logging.config.fileConfig(log_conf_file)
+logger = logging.getLogger('physaci_subscriber')
 
 _ALT_ALLOWED_SECTIONS = ['physaci', 'node_server']
 _STATIC_CONFIG_FILE = pathlib.Path('/etc/opt/physaci_sub/conf.ini')
@@ -35,7 +42,10 @@ class PhysaCIConfig():
     def __init__(self):
         self.alt_config = None
         self.config = ConfigParser(allow_no_value=True, default_section='local')
-        self.config.read(_STATIC_CONFIG_FILE)
+        read_config = self.config.read(_STATIC_CONFIG_FILE)
+        if not read_config:
+            logger.warning('Could not read physaci_subscriber configuration')
+            return
 
         self.config_location = self.config.get('local', 'config_file',
                                                fallback=_STATIC_CONFIG_FILE)
@@ -43,8 +53,10 @@ class PhysaCIConfig():
             alt_conf_file = pathlib.Path(self.config_location)
             self.alt_config = ConfigParser(allow_no_value=True)
             self.alt_config.read(alt_conf_file)
-            self.config = config_read.read([_STATIC_CONFIG_FILE, alt_conf_file],
+            read_config = self.config.read([_STATIC_CONFIG_FILE, alt_conf_file],
                                            default_section='local')
+            if alt_conf_file not in read_config:
+                logger.warning('Could not read physaci_subscriber alternate configuration')
 
     @property
     def listen_port(self):
