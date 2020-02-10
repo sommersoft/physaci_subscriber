@@ -38,10 +38,7 @@ import requests
 
 from physaci_subscriber.config import PhysaCIConfig
 
-log_conf_file = pkg_resources.resource_filename(__name__, 'logger.conf')
-logging.config.fileConfig(log_conf_file)
-debug_logger = logging.getLogger()
-logger = logging.getLogger('physaci_subscriber')
+from .logger import debug_logger, physaci_logger
 
 class PhysaCISubscribe():
     """ Class to handle generating and sending subscription notices
@@ -113,32 +110,32 @@ class PhysaCISubscribe():
             a new node signature key for use with an HTTP Signature header
             inside pushed notifications.
         """
-        logger.info('Initiating physaCI registrar subscription...')
+        physaci_logger.info('Initiating physaCI registrar subscription...')
         sub_message = {
             'node_name': gethostname(),
             'listen_port': self.configuration.listen_port,
             'busy': self.node_busy_status().get('busy', False)
         }
 
-        logger.info('Generating new node signature key...')
+        physaci_logger.info('Generating new node signature key...')
         self.generate_node_key()
         sub_message['node_sig_key'] = self.configuration.node_sig_key
 
         url = self.configuration.physaci_registrar_url
         header = {'x-functions-key': self.configuration.physaci_api_key}
 
-        logger.info('Sending subscription request...')
+        physaci_logger.info('Sending subscription request...')
         response = requests.post(url, headers=header, json=sub_message)
         if response.ok:
             self.configuration.write_config()
-            logger.info("Successfully subscribed.")
+            physaci_logger.info("Successfully subscribed.")
         else:
             log_message = [
                 'Subscription request failed',
                 'Response status code: {}'.format(response.status_code),
                 'Response Message: {}'.format(response.text),
             ]
-            logger.error(' | '.join(log_message))
+            physaci_logger.error(' | '.join(log_message))
 
 
 def subscribe_to_registrar():
