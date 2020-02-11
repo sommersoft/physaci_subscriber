@@ -103,9 +103,15 @@ class PhysaCIConfig():
                        line)
             )
 
-        if key_in_alt:
-            with open(self.config_location, 'w') as write_file:
-                write_file.writelines(new_contents)
-        else:
-            with open(_STATIC_CONFIG_FILE, 'w') as write_file:
-                write_file.writelines(new_contents)
+        try:
+            if key_in_alt:
+                with open(self.config_location, 'w') as write_file:
+                    write_file.writelines(new_contents)
+            else:
+                with open(_STATIC_CONFIG_FILE, 'w') as write_file:
+                    write_file.writelines(new_contents)
+        except Exception as err:
+            physaci_logger.error(
+                'Failed to write updates to node server config file. '
+                'Error: {}'.format(err)
+            )
