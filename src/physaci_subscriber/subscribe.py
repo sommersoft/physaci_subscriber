@@ -82,7 +82,8 @@ class PhysaCISubscribe():
             'Date': datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:S GMT'),
         }
 
-        sig_string = "{}\n{}".format(header['Host'], header['Date'])
+        sig_string = (f'(request-target): get /status\nhost: {header["Host"]}\n'
+                      f'date: {header["Date"]}')
         sig_hashed = hmac.new(
             self.configuration.node_sig_key.encode(),
             msg=sig_string.encode(),
@@ -90,10 +91,10 @@ class PhysaCISubscribe():
         )
         signature = [
             'Signature ',
-            'keyID="{}",'.format(gethostname()),
+            f'keyID="{gethostname()}",',
             'algorithm="hmac-sha256",',
-            'headers="{}",'.format([hdr.lower() for hdr in header.keys()]),
-            'signature="{}"'.format(b64encode(sig_hashed.digest()))
+            'headers="(request-target) host date",',
+            f'signature="{b64encode(sig_hashed.digest())}"'
         ]
         header['Authorization'] = ''.join(signature)
 
