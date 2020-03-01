@@ -91,8 +91,8 @@ class PhysaCISubscribe():
         signature = [
             'Signature ',
             'keyID="{}",'.format(gethostname()),
-            'algorithm="hmac-sha256"',
-            'headers="{}"'.format([hdr.lower() for hdr in header.keys()]),
+            'algorithm="hmac-sha256",',
+            'headers="{}",'.format([hdr.lower() for hdr in header.keys()]),
             'signature={}'.format(b64encode(sig_hashed.digest()))
         ]
         header['Authorization'] = ''.join(signature)
