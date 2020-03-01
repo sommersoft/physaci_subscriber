@@ -79,7 +79,7 @@ class PhysaCISubscribe():
 
         header = {
             'Host': '127.0.0.1',
-            'Date': datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:S GMT'),
+            'Date': datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT'),
         }
 
         sig_string = (f'(request-target): get /status\nhost: {header["Host"]}\n'
