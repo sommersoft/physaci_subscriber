@@ -22,11 +22,6 @@
 #
 
 import hmac
-import logging
-import logging.config
-import json
-import pkg_resources
-import pathlib
 import secrets
 
 from base64 import b64encode
@@ -129,7 +124,7 @@ class PhysaCISubscribe():
         self.generate_node_key()
         sub_message['node_sig_key'] = self.configuration.node_sig_key
 
-        url = self.configuration.physaci_registrar_url
+        url = self.configuration.physaci_url + '/registrar/add'
         header = {'x-functions-key': self.configuration.physaci_api_key}
 
         debug_logger.info('Sending subscription request.')

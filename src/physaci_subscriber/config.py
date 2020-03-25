@@ -21,10 +21,7 @@
 # THE SOFTWARE.
 #
 
-import logging
-import logging.config
 import pathlib
-import pkg_resources
 import re
 
 from configparser import ConfigParser
@@ -42,7 +39,9 @@ class PhysaCIConfig():
         self.config = ConfigParser(allow_no_value=True, default_section='local')
         read_config = self.config.read(_STATIC_CONFIG_FILE)
         if not read_config:
-            physaci_logger.warning('Could not read physaci_subscriber configuration')
+            physaci_logger.warning(
+                'Could not read physaci_subscriber configuration'
+            )
             return
 
         self.config_location = self.config.get('local', 'config_file',
@@ -54,15 +53,17 @@ class PhysaCIConfig():
             read_config = self.config.read([_STATIC_CONFIG_FILE, alt_conf_file],
                                            default_section='local')
             if alt_conf_file not in read_config:
-                physaci_logger.warning('Could not read physaci_subscriber alternate configuration')
+                physaci_logger.warning(
+                    'Could not read physaci_subscriber alternate configuration'
+                )
 
     @property
     def listen_port(self):
         return self.config.get('node_server', 'listen_port')
 
     @property
-    def physaci_registrar_url(self):
-        return self.config.get('local', 'physaci_registrar_url')
+    def physaci_url(self):
+        return self.config.get('local', 'physaci_url')
 
     @property
     def physaci_api_key(self):
